@@ -13,7 +13,7 @@ Add the `markup` crate to your dependencies:
 
 ```toml
 [dependencies]
-markup = "0.3.1"
+markup = "0.4.1"
 ```
 
 Define your template using the `markup::define!` macro:
@@ -77,6 +77,40 @@ Rendering the template produces (manually prettified):
     </div>
   </body>
 </html>
+```
+
+## Note
+
+Due to [a limitation in syn](https://github.com/dtolnay/syn/issues/515), the
+crate this crate uses to parse templates, it is necessary to wrap identifiers
+which precede an opening brace to be put in parentheses.
+
+Example:
+
+```rust
+// Wrong
+@if let Some(foo) = bar {
+  ...
+}
+@match foo {
+  ...
+}
+
+// Correct
+@if let Some(foo) = {bar} {
+  ...
+}
+@match {foo} {
+  ...
+}
+
+// Also works
+@if let Some(foo) = *&(bar) {
+  ...
+}
+@match *&(foo) {
+  ...
+}
 ```
 
 ## Syntax
@@ -244,6 +278,7 @@ println!("{}", Hello {});
 ```
 
 A template can accept simple arguments as well as generic arguments with where clauses.
+The arguments may have an optional trailing comma.
 
 ```rust
 markup::define! {
@@ -264,7 +299,11 @@ println!("{}", Hello { foo: 1, bar: 2, string: String::from("hello") });
 
 ```rust
 markup::define! {
-    Hello<'a, T: std::fmt::Debug, U>(arg: T, arg2: U, str: &'a str) where U: std::fmt::Display {
+    Hello<'a, T: std::fmt::Debug, U>(
+        arg: T,
+        arg2: U,
+        str: &'a str,
+    ) where U: std::fmt::Display {
         div {
             {format!("{:?}", arg)}
             {format!("{}", arg2)}
@@ -362,6 +401,48 @@ println!("{}", Main {});
 None
 Some(ZERO)
 Some(1)
+```
+
+@match
+
+```rust
+markup::define! {
+    Classify(value: Option<i32>) {
+        @match *(value) {
+          Some(1) | Some(2) => {
+            "1"
+            " or 2"
+          }
+          Some(n) if n == 3 => {
+            {n} {n}
+          }
+          Some(_) => {
+            "Other"
+          }
+          None => {
+            "None"
+          }
+        }
+        "\n"
+    }
+    Main {
+        {Classify { value: None }}
+        {Classify { value: Some(0) }}
+        {Classify { value: Some(1) }}
+        {Classify { value: Some(2) }}
+        {Classify { value: Some(3) }}
+    }
+}
+```
+```rust
+println!("{}", Main {});
+```
+```html
+None
+Other
+1 or 2
+1 or 2
+33
 ```
 
 @for

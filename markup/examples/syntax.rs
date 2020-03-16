@@ -92,7 +92,11 @@ mod e6 {
 
 mod e7 {
     markup::define! {
-        Hello<'a, T: std::fmt::Debug, U>(arg: T, arg2: U, str: &'a str) where U: std::fmt::Display {
+        Hello<'a, T: std::fmt::Debug, U>(
+            arg: T,
+            arg2: U,
+            str: &'a str,
+        ) where U: std::fmt::Display {
             div {
                 {format!("{:?}", arg)}
                 {format!("{}", arg2)}
@@ -160,6 +164,36 @@ mod e10 {
 
 mod e11 {
     markup::define! {
+        Classify(value: Option<i32>) {
+            @match *(value) {
+              Some(1) | Some(2) => {
+                "1"
+                " or 2"
+              }
+              Some(n) if n == 3 => {
+                {n} {n}
+              }
+              Some(_) => {
+                "Other"
+              }
+              None => {
+                "None"
+              }
+            }
+            "\n"
+        }
+        Main {
+            {Classify { value: None }}
+            {Classify { value: Some(0) }}
+            {Classify { value: Some(1) }}
+            {Classify { value: Some(2) }}
+            {Classify { value: Some(3) }}
+        }
+    }
+}
+
+mod e12 {
+    markup::define! {
         Main {
             @for i in 1..5 {
                 {i} " * 2 = " {i * 2} ";\n"
@@ -168,7 +202,7 @@ mod e11 {
     }
 }
 
-mod e12 {
+mod e13 {
     markup::define! {
         Main {
             {let x = 1;}
@@ -208,4 +242,5 @@ fn main() {
     println!("{}\n", e10::Main {});
     println!("{}\n", e11::Main {});
     println!("{}\n", e12::Main {});
+    println!("{}\n", e13::Main {});
 }
